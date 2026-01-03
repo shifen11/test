@@ -79,6 +79,6 @@ def chat():
         return jsonify({"reply": f"错误: {str(e)}"}), 500
 
 if __name__ == '__main__':
-    # 从环境变量获取端口，Zeabur 部署必须这么写
+    # 从环境变量获取端口，Zeabur 部署必须这么写1
     port = int(os.environ.get("PORT", 5000))
     app.run(host='0.0.0.0', port=port)
