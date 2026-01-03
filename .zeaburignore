@@ -1,0 +1,21 @@
+# Zeabur 忽略文件
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+.venv/
+venv/
+env/
+ENV/
+.idea/
+.vscode/
+*.log
+.DS_Store
+功能录屏.mp4
+

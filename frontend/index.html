@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI 银行智能体</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            500: '#667eea',
+                            600: '#764ba2',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* 自定义滚动条样式 */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 10px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+        
+        /* 加载动画 */
+        @keyframes bounce {
+            0%, 80%, 100% {
+                transform: scale(0);
+            }
+            40% {
+                transform: scale(1);
+            }
+        }
+        .loading-dot {
+            animation: bounce 1.4s infinite ease-in-out both;
+        }
+        .loading-dot:nth-child(1) { animation-delay: -0.32s; }
+        .loading-dot:nth-child(2) { animation-delay: -0.16s; }
+        
+        /* 消息淡入动画 */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        .msg-animate {
+            animation: fadeIn 0.3s ease-in;
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 flex items-center justify-center p-5">
+    
+    <div class="w-full max-w-4xl bg-white rounded-3xl shadow-2xl flex flex-col h-[90vh] max-h-[900px] overflow-hidden">
+        <!-- Header -->
+        <div class="bg-gradient-to-r from-indigo-500 to-purple-600 text-white p-5 text-center shadow-md relative">
+            <button 
+                id="clearBtn" 
+                onclick="clearConversation()" 
+                title="清除对话历史"
+                class="absolute top-4 right-4 bg-white/20 hover:bg-white/30 border border-white/30 text-white px-3 py-1.5 rounded-2xl text-xs transition-all duration-300 hover:scale-105"
+            >
+                🗑️ 清除
+            </button>
+            <h1 class="text-xl font-semibold mb-1">🏦 智能银行助手</h1>
+            <p class="text-xs opacity-90">查询余额 · 转账服务 · 智能对话</p>
+        </div>
+        
+        <!-- Messages Area -->
+        <div id="messages" class="flex-1 p-6 overflow-y-auto bg-gray-50 custom-scrollbar scroll-smooth">
+            <div class="empty-state text-center py-10 text-gray-500" id="emptyState">
+                <svg class="w-20 h-20 mx-auto mb-4 opacity-50" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                </svg>
+                <p>开始对话吧！试试问我：</p>
+                <p class="mt-2 text-xs">"查询张三的余额" 或 "从张三转账200元给李四"</p>
+            </div>
+        </div>
+        
+        <!-- Quick Questions -->
+        <div id="quick-questions" class="p-3 bg-gradient-to-b from-gray-50 to-white border-t border-gray-200 flex flex-wrap gap-2 max-h-36 overflow-y-auto custom-scrollbar">
+            <button 
+                class="quick-question-btn px-4 py-2 bg-white border-2 border-gray-200 rounded-full text-sm text-gray-600 font-medium shadow-sm hover:bg-gradient-to-r hover:from-indigo-500 hover:to-purple-600 hover:text-white hover:border-transparent hover:-translate-y-0.5 hover:shadow-md transition-all duration-200 active:translate-y-0 whitespace-nowrap"
+                onclick="sendQuickQuestion('查询张三的余额')"
+            >
+                💰 查询余额
+            </button>
+            <button 
+                class="quick-question-btn px-4 py-2 bg-white border-2 border-gray-200 rounded-full text-sm text-gray-600 font-medium shadow-sm hover:bg-gradient-to-r hover:from-indigo-500 hover:to-purple-600 hover:text-white hover:border-transparent hover:-translate-y-0.5 hover:shadow-md transition-all duration-200 active:translate-y-0 whitespace-nowrap"
+                onclick="sendQuickQuestion('查询张三的账户信息')"
+            >
+                📋 账户信息
+            </button>
+            <button 
+                class="quick-question-btn px-4 py-2 bg-white border-2 border-gray-200 rounded-full text-sm text-gray-600 font-medium shadow-sm hover:bg-gradient-to-r hover:from-indigo-500 hover:to-purple-600 hover:text-white hover:border-transparent hover:-translate-y-0.5 hover:shadow-md transition-all duration-200 active:translate-y-0 whitespace-nowrap"
+                onclick="sendQuickQuestion('从张三转账200元给李四')"
+            >
+                💸 转账
+            </button>
+            <button 
+                class="quick-question-btn px-4 py-2 bg-white border-2 border-gray-200 rounded-full text-sm text-gray-600 font-medium shadow-sm hover:bg-gradient-to-r hover:from-indigo-500 hover:to-purple-600 hover:text-white hover:border-transparent hover:-translate-y-0.5 hover:shadow-md transition-all duration-200 active:translate-y-0 whitespace-nowrap"
+                onclick="sendQuickQuestion('查看张三的交易记录')"
+            >
+                📝 交易记录
+            </button>
+            <button 
+                class="quick-question-btn px-4 py-2 bg-white border-2 border-gray-200 rounded-full text-sm text-gray-600 font-medium shadow-sm hover:bg-gradient-to-r hover:from-indigo-500 hover:to-purple-600 hover:text-white hover:border-transparent hover:-translate-y-0.5 hover:shadow-md transition-all duration-200 active:translate-y-0 whitespace-nowrap"
+                onclick="sendQuickQuestion('列出所有账户')"
+            >
+                👥 账户列表
+            </button>
+            <button 
+                class="quick-question-btn px-4 py-2 bg-white border-2 border-gray-200 rounded-full text-sm text-gray-600 font-medium shadow-sm hover:bg-gradient-to-r hover:from-indigo-500 hover:to-purple-600 hover:text-white hover:border-transparent hover:-translate-y-0.5 hover:shadow-md transition-all duration-200 active:translate-y-0 whitespace-nowrap"
+                onclick="sendQuickQuestion('给我一些理财建议')"
+            >
+                💡 理财建议
+            </button>
+        </div>
+        
+        <!-- Input Area -->
+        <div class="p-4 bg-white border-t border-gray-200 flex gap-3 items-center">
+            <input 
+                type="text" 
+                id="userInput" 
+                placeholder="输入消息..." 
+                autocomplete="off"
+                class="flex-1 px-4 py-3 border-2 border-gray-200 rounded-full text-sm outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100 transition-all duration-300"
+            >
+            <button 
+                id="sendBtn" 
+                onclick="sendMessage()"
+                class="px-6 py-3 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-full text-sm font-medium min-w-[70px] hover:-translate-y-0.5 hover:shadow-lg active:translate-y-0 transition-all duration-300 disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:translate-y-0"
+            >
+                发送
+            </button>
+        </div>
+    </div>
+
+    <script>
+        const messagesContainer = document.getElementById('messages');
+        const userInput = document.getElementById('userInput');
+        const sendBtn = document.getElementById('sendBtn');
+        const emptyState = document.getElementById('emptyState');
+        const quickQuestions = document.getElementById('quick-questions');
+
+        function getCurrentTime() {
+            const now = new Date();
+            return now.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
+        }
+
+        function formatText(text) {
+            let formatted = text;
+            formatted = formatted.replace(/\n{3,}/g, '\n\n');
+            formatted = formatted.replace(/^(\d+[\.、])\s*(.+)$/gm, '$1 $2');
+            return formatted;
+        }
+
+        function addMessage(text, sender, isError = false) {
+            if (emptyState) {
+                emptyState.style.display = 'none';
+            }
+
+            const msgDiv = document.createElement('div');
+            msgDiv.className = `mb-4 px-4 py-3 rounded-2xl max-w-[85%] min-w-[120px] word-break break-words relative msg-animate ${
+                sender === 'user' 
+                    ? 'ml-auto bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-br-sm' 
+                    : isError
+                    ? 'bg-red-50 text-red-700 border border-red-200 rounded-bl-sm'
+                    : 'bg-white text-gray-800 border border-gray-200 rounded-bl-sm shadow-sm'
+            }`;
+            
+            const contentDiv = document.createElement('div');
+            contentDiv.className = 'whitespace-pre-wrap break-words leading-relaxed tracking-wide text-[15px]';
+            contentDiv.textContent = formatText(text);
+            msgDiv.appendChild(contentDiv);
+
+            const timeSpan = document.createElement('span');
+            timeSpan.className = `block mt-2 text-[11px] font-normal ${
+                sender === 'user' ? 'text-white/80' : 'text-gray-500'
+            }`;
+            timeSpan.textContent = getCurrentTime();
+            msgDiv.appendChild(timeSpan);
+
+            messagesContainer.appendChild(msgDiv);
+            scrollToBottom();
+        }
+
+        function showLoading() {
+            const loadingDiv = document.createElement('div');
+            loadingDiv.className = 'loading inline-flex items-center gap-1 px-4 py-3 bg-white border border-gray-200 rounded-2xl rounded-bl-sm max-w-[75px]';
+            loadingDiv.id = 'loadingIndicator';
+            loadingDiv.innerHTML = `
+                <div class="loading-dot w-2 h-2 bg-indigo-500 rounded-full"></div>
+                <div class="loading-dot w-2 h-2 bg-indigo-500 rounded-full"></div>
+                <div class="loading-dot w-2 h-2 bg-indigo-500 rounded-full"></div>
+            `;
+            messagesContainer.appendChild(loadingDiv);
+            scrollToBottom();
+        }
+
+        function hideLoading() {
+            const loading = document.getElementById('loadingIndicator');
+            if (loading) {
+                loading.remove();
+            }
+        }
+
+        function scrollToBottom() {
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        function sendQuickQuestion(question) {
+            userInput.value = question;
+            sendMessage();
+        }
+
+        async function sendMessage() {
+            const text = userInput.value.trim();
+            if (!text) return;
+
+            userInput.disabled = true;
+            sendBtn.disabled = true;
+            sendBtn.textContent = '发送中...';
+
+            addMessage(text, 'user');
+            userInput.value = '';
+
+            showLoading();
+
+            try {
+                const response = await fetch('/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message: text })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                hideLoading();
+                
+                if (data.reply) {
+                    addMessage(data.reply, 'ai');
+                } else {
+                    addMessage('抱歉，没有收到回复。', 'ai', true);
+                }
+            } catch (error) {
+                hideLoading();
+                addMessage(`错误：${error.message}。请稍后重试。`, 'ai', true);
+                console.error('Error:', error);
+            } finally {
+                userInput.disabled = false;
+                sendBtn.disabled = false;
+                sendBtn.textContent = '发送';
+                userInput.focus();
+            }
+        }
+
+        userInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+
+        async function clearConversation() {
+            if (!confirm('确定要清除所有对话历史吗？')) {
+                return;
+            }
+
+            try {
+                const response = await fetch('/clear', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+
+                if (response.ok) {
+                    messagesContainer.innerHTML = '';
+                    if (emptyState) {
+                        emptyState.style.display = 'block';
+                    }
+                    if (quickQuestions) {
+                        quickQuestions.classList.remove('hidden');
+                    }
+                    addMessage('对话历史已清除，可以开始新的对话了。', 'ai');
+                } else {
+                    alert('清除对话历史失败，请稍后重试。');
+                }
+            } catch (error) {
+                console.error('Clear conversation error:', error);
+                alert('清除对话历史时出错，请稍后重试。');
+            }
+        }
+
+        window.addEventListener('load', () => {
+            userInput.focus();
+        });
+    </script>
+
+</body>
+</html>
+
