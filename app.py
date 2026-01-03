@@ -27,7 +27,7 @@ def create_app():
 
     @app.route('/')
     def index():
-        """首页"""
+        """首页1"""
         return render_template('index.html')
     
     # 初始化数据库
