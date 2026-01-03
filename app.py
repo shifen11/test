@@ -8,7 +8,7 @@ app = Flask(__name__)
 # 配置 DeepSeek
 # 建议：在 Zeabur 环境变量里设置 OPENAI_API_KEY，然后用 os.getenv("OPENAI_API_KEY") 读取
 client = OpenAI(
-    api_key="sk-b7a3837bd39d403aa961e2e95026ee35", 
+    api_key="sk-b7a3837bd39d403aa961e2e95026ee35",
     base_url="https://api.deepseek.com"
 )
 
@@ -29,10 +29,10 @@ def transfer_money(from_name, to_name, amount):
         amt = float(amount)
     except:
         return "转账失败：金额格式不正确。"
-        
+
     if mock_db[from_name]["balance"] < amt:
         return "转账失败：余额不足。"
-    
+
     mock_db[from_name]["balance"] -= amt
     mock_db[to_name]["balance"] += amt
     return f"转账成功！已从{from_name}转出{amt}元至{to_name}。"
@@ -44,7 +44,7 @@ def index():
 @app.route('/chat', methods=['POST'])
 def chat():
     user_input = request.json.get("message")
-    
+
     system_prompt = """你是一个银行助手。你可以执行：
     1. 查询余额: 输出格式 CALL:get_balance(name="姓名")
     2. 转账: 输出格式 CALL:transfer_money(from_name="谁", to_name="谁", amount=金额)
@@ -72,7 +72,7 @@ def chat():
                 amt = re.search(r'amount=([\d.]+)', ai_reply).group(1) # 兼容小数点
                 final_res = transfer_money(from_n, to_n, amt)
             return jsonify({"reply": final_res})
-        
+
         return jsonify({"reply": ai_reply})
 
     except Exception as e:
@@ -80,5 +80,5 @@ def chat():
 
 if __name__ == '__main__':
     # 从环境变量获取端口，Zeabur 部署必须这么写1
-    port = int(os.environ.get("PORT", 5000))
+    port = int(os.environ.get("PORT", 8080))
     app.run(host='0.0.0.0', port=port)
